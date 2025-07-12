@@ -44,3 +44,9 @@ void control(float error)
     u = u * 255.0 / 100.0;
     motor(int(u));
 }
+
+void controlSetup()
+{
+    Serial.begin(115200);
+    t = millis();
+}

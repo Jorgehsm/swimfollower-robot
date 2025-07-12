@@ -3,12 +3,14 @@
 
 #include <Arduino.h>
 
-extern volatile unsigned long lastPulseTime;
+extern volatile uint32_t lastPulseTime;
 extern volatile bool newPulse;
 
 void encoderISR();
-void updateAvg(float speed);
+float calcSpeed();
+void updateAvg(float newSpeed);
 float getAvg();
-void calcSpeed()
+void encoderSetup();
+void encoderLoop();
 
 #endif

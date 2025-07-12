@@ -5,5 +5,7 @@
 
 void checkSerialInput();
 void control(float error);
+void controlSetup();
+void motor();
 
 #endif
