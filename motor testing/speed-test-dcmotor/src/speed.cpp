@@ -1,4 +1,4 @@
-
+#include <config.h>
 #include <Arduino.h>
 #include <speed.h>
 #include <stdint.h>
@@ -10,7 +10,6 @@ uint32_t lastSend = 0;
 
 float w = 0.0;
 float speed = 0;
-float wheelRadius = WHEEL_RADIUS / 1000;
 
 float speedHistory[MOVING_AVG_SIZE] = {0};
 int historyIndex = 0;
@@ -28,8 +27,8 @@ float calcSpeed()
 {
     float seconds = delta / 1e6;
     w = (2.0 * PI) / (ENCODER_PPR * seconds);
-    float instantSpeed = w * wheelRadius;
-    return instantSpeed;
+    float rpm = w;
+    return rpm;
 }
 
 void updateAvg(float newSpeed)
@@ -61,7 +60,7 @@ void encoderSetup()
     attachInterrupt(digitalPinToInterrupt(ENCODER), encoderISR, RISING);
 }
 
-void encoderLoop()
+float encoderLoop()
 {
     if (newPulse)
     {
@@ -72,10 +71,6 @@ void encoderLoop()
         updateAvg(speed);
     }
 
-    if (millis() - lastSend >= 200)
-    {
-        lastSend = millis();
-        float avgSpeed = getAvg();
-        Serial.println(avgSpeed);
-    }
+    float avgSpeed = getAvg();
+    return avgSpeed;
 }

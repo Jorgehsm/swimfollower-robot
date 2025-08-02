@@ -12,6 +12,6 @@ float calcSpeed();
 void updateAvg(float newSpeed);
 float getAvg();
 void encoderSetup();
-void encoderLoop();
+float encoderLoop();
 
 #endif
