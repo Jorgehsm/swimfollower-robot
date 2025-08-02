@@ -2,13 +2,14 @@ from ultralytics import YOLO
 import cv2
 import serial
 import time
+import os
 
 # ------------------ CONFIGURATION ------------------
 
 model_path = 'yolov8n-face.pt'             # Path to your trained YOLO model
 serial_port = '/dev/ttyUSB0'       # Serial port used (adjust as needed)
 baud_rate = 115200                 # Baud rate for serial communication
-video_source = 0                   # Camera index or path to video file
+video_source = '/dev/video2'                   # Camera index or path to video file
 confidence_threshold = 0.4         # YOLO confidence threshold
 
 # ------------------ INITIALIZATION ------------------
@@ -16,11 +17,18 @@ confidence_threshold = 0.4         # YOLO confidence threshold
 # Load the trained YOLOv8 model
 model = YOLO(model_path)
 
-# Open video capture (camera or video file)
+# Aguarda o dispositivo aparecer no sistema
+print("Esperando a câmera conectar...")
+while not os.path.exists(video_source):
+    time.sleep(0.2)
+
+# Agora tenta abrir com OpenCV
 video_capture = cv2.VideoCapture(video_source)
 if not video_capture.isOpened():
-    print("Error: Could not open video source.")
+    print("Erro: não foi possível abrir a câmera.")
     exit()
+else:
+    print("Câmera conectada com sucesso.")
 
 # Open serial communication with the microcontroller
 try:
