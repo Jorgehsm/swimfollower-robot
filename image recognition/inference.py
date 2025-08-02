@@ -9,26 +9,30 @@ import os
 model_path = 'yolov8n-face.pt'             # Path to your trained YOLO model
 serial_port = '/dev/ttyUSB0'       # Serial port used (adjust as needed)
 baud_rate = 115200                 # Baud rate for serial communication
-video_source = '/dev/video2'                   # Camera index or path to video file
+video_source = '/dev/video0'                   # Camera index or path to video file
 confidence_threshold = 0.4         # YOLO confidence threshold
+discard_old_frames = 5  # How many frames to discard
 
 # ------------------ INITIALIZATION ------------------
 
 # Load the trained YOLOv8 model
 model = YOLO(model_path)
 
-# Aguarda o dispositivo aparecer no sistema
+# Waits for camera connection
 print("Esperando a câmera conectar...")
 while not os.path.exists(video_source):
     time.sleep(0.2)
 
-# Agora tenta abrir com OpenCV
+# Opens camera with OpenCV
 video_capture = cv2.VideoCapture(video_source)
 if not video_capture.isOpened():
     print("Erro: não foi possível abrir a câmera.")
     exit()
 else:
     print("Câmera conectada com sucesso.")
+
+video_capture.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+video_capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
 # Open serial communication with the microcontroller
 try:
@@ -41,6 +45,10 @@ except serial.SerialException as e:
 # ------------------ INFERENCE LOOP ------------------
 
 while True:
+
+    for _ in range(discard_old_frames):  # Ajuste conforme necessário (2~5 geralmente já ajuda)
+        video_capture.read()
+
     # Read video frame
     success, frame = video_capture.read()
     if not success:
