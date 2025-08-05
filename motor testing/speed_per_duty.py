@@ -5,7 +5,7 @@ import numpy as np
 import os
 
 PORT = '/dev/ttyUSB0'  # '/dev/ttyUSB0' ou 'COM'
-BAUDRATE = 9600
+BAUDRATE = 115200  # Baudrate for serial communication
 
 TIMEOUT = 3 #seconds
 
@@ -56,9 +56,9 @@ with open(path, "w") as results_file:
 duties, rpms = zip(*data)
 plt.figure()
 plt.plot(duties, rpms, 'b.-')
-plt.title('Motor speed response for duty cycle')
+plt.title('Velocidade do motor em função do Duty Cycle')
 plt.xlabel('Duty Cycle (%)')
-plt.ylabel('Speed (RPM)')
+plt.ylabel('Velocidade (RPM)')
 plt.grid(True)
 plt.tight_layout()
 

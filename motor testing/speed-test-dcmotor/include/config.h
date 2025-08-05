@@ -10,4 +10,7 @@
 
 #define MOVING_AVG_SIZE 10
 
+#define STOP_TIMEOUT 50000000  //500 ms em microssegundos
+#define DEBOUNCE_US 5000 //500 microssegundos
+
 #endif // CONFIG_H
