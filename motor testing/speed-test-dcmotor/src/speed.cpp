@@ -57,8 +57,8 @@ void encoderSetup()
 {
     lastPulseTime = micros();
     lastSend = micros();
-    pinMode(ENCODER, INPUT_PULLUP);
-    attachInterrupt(digitalPinToInterrupt(ENCODER), encoderISR, RISING);
+    pinMode(ENCODER, INPUT);
+    attachInterrupt(digitalPinToInterrupt(ENCODER), encoderISR, FALLING);
 }
 
 float encoderLoop()

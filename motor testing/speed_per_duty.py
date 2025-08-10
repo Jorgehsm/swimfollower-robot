@@ -7,7 +7,7 @@ import os
 PORT = '/dev/ttyUSB0'  # '/dev/ttyUSB0' ou 'COM'
 BAUDRATE = 115200  # Baudrate for serial communication
 
-TIMEOUT = 3 #seconds
+TIMEOUT = 20 #seconds
 
 ser = serial.Serial(PORT, BAUDRATE, timeout=1)
 time.sleep(2) #Waits connection to be established
@@ -22,6 +22,7 @@ while True:
     raw = ser.readline()
     if raw != b'':
         print("First data detected. Starting read...")
+        time.sleep(1)
         last_data = time.time()
         break
 
@@ -30,6 +31,7 @@ print("Reading...")
 try:
     while True:
         line = ser.readline().decode().strip()
+        print(line)
         if line:
             try:
                 duty, rpm = map(float, line.split(','))
@@ -57,7 +59,7 @@ duties, rpms = zip(*data)
 plt.figure()
 plt.plot(duties, rpms, 'b.-')
 plt.title('Velocidade do motor em função do Duty Cycle')
-plt.xlabel('Duty Cycle (%)')
+plt.xlabel('Duty Cycle')
 plt.ylabel('Velocidade (RPM)')
 plt.grid(True)
 plt.tight_layout()
