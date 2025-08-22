@@ -3,7 +3,8 @@
 #include <config.h>
 #include <control.h>
 
-float kp = 1, ki = 1, error_int = 0, error_ant = 0, u = 0;
+float kp = 1, ki = 1, last_error = 0, error_int = 0;
+
 uint32_t t = 0;
 
 void checkSerialInput()
@@ -23,30 +24,44 @@ void motor(int vel)
 
 void control(float error)
 {
-    unsigned long int dt = millis() - t;
-    error_int += ((error_ant + error) * (dt) / 2000);
+    uint32_t now = millis();
+    uint32_t dt = (now - t);
+    t = now;
 
-    u = kp * error + ki * error_int;
+    error_int += (0.0005f * (last_error + error) * (dt));
+
+    float u = kp * error + ki * error_int;
 
     if (u >= 100)
     {
         u = 100;
-        error_int -= ((error_ant + error) * dt / 2000);
+        error_int -= (0.0005f * (last_error + error) * (dt));
     }
     else if (u <= 0)
     {
         u = 0;
+        error_int -= (0.0005f * (last_error + error) * (dt));
     }
 
-    t = millis();
-    error_ant = error;
+    last_error = error;
 
-    u = u * 255.0 / 100.0;
-    motor(int(u));
+    float pwm = u * 255.0 / 100.0;
+    motor(int(pwm));
 }
 
 void controlSetup()
 {
     Serial.begin(115200);
+
+    ledcSetup(PWM_CHANNEL_LEFT, PWM_FREQ, PWM_RESOLUTION);
+    ledcSetup(PWM_CHANNEL_RIGHT, PWM_FREQ, PWM_RESOLUTION);
+    ledcAttachPin(PWM_LEFT, PWM_CHANNEL);
+    ledcAttachPin(PWM_LEFT, PWM_CHANNEL);
+
+    pinMode(IN1_LEFT, OUTPUT);
+    pinMode(IN2_LEFT, OUTPUT);
+    digitalWrite(IN1_LEFT, LOW);
+    digitalWrite(IN2_LEFT, HIGH);
+
     t = millis();
 }

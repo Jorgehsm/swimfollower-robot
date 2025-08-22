@@ -4,9 +4,7 @@
 #include <Arduino.h>
 #include <config.h>
 
-//extern volatile uint32_t lastPulseTime;
-//extern volatile bool newPulse;
-extern volatile uint32_t delta;
+volatile uint32_t delta;
 
 void encoderISR();
 float calcSpeed();

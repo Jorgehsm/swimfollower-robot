@@ -1,4 +1,4 @@
-
+#include <config.h>
 #include <Arduino.h>
 #include <speed.h>
 #include <stdint.h>
@@ -8,9 +8,7 @@ volatile bool newPulse = false;
 
 uint32_t lastSend = 0;
 
-float w = 0.0;
 float speed = 0;
-float wheelRadius = WHEEL_RADIUS / 1000;
 
 float speedHistory[MOVING_AVG_SIZE] = {0};
 int historyIndex = 0;
@@ -19,16 +17,18 @@ bool historyFilled = false;
 void IRAM_ATTR encoderISR()
 {
     uint32_t now = micros();
-    delta = now - lastPulseTime;
-    lastPulseTime = now;
-    newPulse = true;
+    if (now - lastPulseTime > DEBOUNCE_US)
+    {
+        delta = now - lastPulseTime;
+        lastPulseTime = now;
+        newPulse = true;
+    }
 }
 
 float calcSpeed()
 {
-    float seconds = delta / 1e6;
-    w = (2.0 * PI) / (ENCODER_PPR * seconds);
-    float instantSpeed = w * wheelRadius;
+    float f = 1e6 / (ENCODER_PPR * delta); // Hz
+    float instantSpeed = PI * (float(WHEEL_DIAMETER) * 0.001) * f;
     return instantSpeed;
 }
 
@@ -55,20 +55,28 @@ float getAvg()
 
 void encoderSetup()
 {
-    lastPulseTime = millis();
-    lastSend = millis();
-    pinMode(ENCODER, INPUT_PULLUP);
-    attachInterrupt(digitalPinToInterrupt(ENCODER), encoderISR, RISING);
+    lastPulseTime = micros();
+    lastSend = micros();
+    pinMode(ENCODER, INPUT);
+    attachInterrupt(digitalPinToInterrupt(ENCODER), encoderISR, FALLING);
 }
 
-void encoderLoop()
+float encoderLoop()
 {
+    uint32_t now = micros();
     if (newPulse)
     {
+        newPulse = false;
         if (delta > 0)
         {
             speed = calcSpeed();
         }
+        updateAvg(speed);
+    }
+
+    else if ((now - lastPulseTime) > STOP_TIMEOUT)
+    {
+        speed = 0;
         updateAvg(speed);
     }
 
@@ -78,4 +86,16 @@ void encoderLoop()
         float avgSpeed = getAvg();
         Serial.println(avgSpeed);
     }
+
+    return getAvg();
+}
+
+void resetAvg()
+{
+    for (int i = 0; i < MOVING_AVG_SIZE; i++)
+    {
+        speedHistory[i] = 0.0;
+    }
+    historyIndex = 0;
+    historyFilled = false;
 }
