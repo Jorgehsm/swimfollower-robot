@@ -1,0 +1,7 @@
+# Paths to your dataset
+train: /home/jorgehsm/swimfollower-robot/image recognition/creating dataset/labelled-test-dataset
+val: /home/jorgehsm/swimfollower-robot/image recognition/creating dataset/labelled-test-dataset
+
+# Number of classes and their names
+nc: 1
+names: ['swimmer']

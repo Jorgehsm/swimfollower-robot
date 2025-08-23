@@ -22,7 +22,7 @@ while True:
     raw = ser.readline()
     if raw != b'':
         print("First data detected. Starting read...")
-        time.sleep(1)
+        time.sleep(3)
         last_data = time.time()
         break
 
