@@ -44,18 +44,33 @@ except serial.SerialException as e:
 
 # ------------------ INFERENCE LOOP ------------------
 
-while True:
+# GStreamer pipeline for video streaming
+# It is important to match the resolution (640x480) and FPS (30) with the VideoCapture.
+# We are using UDP for simplicity.
+# IMPORTANT: Replace <IP_DO_COMPUTADOR_QUE_VAI_RECEBER> with the IP of the machine running VLC.
+pipeline = "appsrc ! video/x-raw, format=BGR, width=640, height=480, framerate=30/1 ! videoconvert ! x264enc speed-preset=ultrafast tune=zerolatency ! rtph264pay ! udpsink host=192.168.1.6 port=5000"
 
-    for _ in range(discard_old_frames):  # Ajuste conforme necessário (2~5 geralmente já ajuda)
+# Create a VideoWriter object with the GStreamer pipeline
+try:
+    video_writer = cv2.VideoWriter(pipeline, cv2.CAP_GSTREAMER, 0, 30.0, (640, 480), True)
+    if not video_writer.isOpened():
+        print("Erro: Falha ao criar o VideoWriter com GStreamer.")
+        exit()
+    print("VideoWriter com GStreamer criado com sucesso.")
+except Exception as e:
+    print(f"Erro ao inicializar o VideoWriter: {e}")
+    exit()
+
+while True:
+    for _ in range(discard_old_frames):
         video_capture.read()
 
-    # Read video frame
     success, frame = video_capture.read()
     if not success:
         print("Warning: Failed to read frame.")
         break
 
-    # Read speed from serial (non-blocking)
+    # Read speed from serial (non-blocking) - O código existente permanece aqui.
     speed_text = ""
     try:
         if serial_connection.in_waiting > 0:
@@ -73,41 +88,23 @@ while True:
     results = model.predict(source=frame, conf=confidence_threshold, save=False, show=False)
     end_time = time.time()
 
-    # Get image dimensions
     frame_height, frame_width = frame.shape[:2]
     image_center_x = frame_width // 2
-
-    # Initialize variable to store the horizontal distance
     horizontal_offset = None
-
-    # Extract detection results
     boxes = results[0].boxes
 
     if boxes and len(boxes) > 0:
-        # Get the first detection
         box = boxes[0]
-
-        # Get box coordinates: (x1, y1, x2, y2)
         x1, y1, x2, y2 = box.xyxy[0].tolist()
-
-        # Calculate centroid of the bounding box
         box_center_x = int((x1 + x2) / 2)
-
-        # Calculate horizontal distance to image center
         horizontal_offset = float(box_center_x - image_center_x)
 
     # Plot annotated frame
     annotated_frame = results[0].plot()
 
-    # Draw center lines and offset if detection exists
     if horizontal_offset is not None:
-        # Draw bounding box center line (blue)
         cv2.line(annotated_frame, (int(box_center_x), 0), (int(box_center_x), frame_height), (255, 0, 0), 2)
-
-        # Draw image center line (red)
         cv2.line(annotated_frame, (image_center_x, 0), (image_center_x, frame_height), (0, 0, 255), 1)
-
-        # Draw offset text
         cv2.putText(
             annotated_frame,
             f"Offset X: {horizontal_offset:.2f}px",
@@ -117,14 +114,11 @@ while True:
             color=(0, 255, 255),
             thickness=1
         )
-
-        # Send offset to microcontroller
         try:
             serial_connection.write(f"{horizontal_offset:.2f}\n".encode('utf-8'))
         except Exception as e:
             print(f"Serial write error: {e}")
 
-    # Draw speed text
     if speed_text:
         cv2.putText(
             annotated_frame,
@@ -136,7 +130,6 @@ while True:
             thickness=2
         )
 
-    # Show FPS
     fps = 1 / (end_time - start_time)
     cv2.putText(
         annotated_frame,
@@ -148,17 +141,18 @@ while True:
         thickness=1
     )
 
-    # Display result
-    #cv2.imshow("YOLOv8 Inference", annotated_frame)
+    # Write the annotated frame to the GStreamer pipeline
+    video_writer.write(annotated_frame)
 
     # Press 'q' to exit
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
-    time.sleep(0.01)  # Small delay to avoid overloading serial
+    time.sleep(0.01)
 
 # ------------------ CLEANUP ------------------
 
 video_capture.release()
+video_writer.release()
 serial_connection.close()
 cv2.destroyAllWindows()
