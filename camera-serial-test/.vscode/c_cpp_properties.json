@@ -8,8 +8,8 @@
         {
             "name": "PlatformIO",
             "includePath": [
-                "/home/jorgehsm/tcc/swimfollower-robot/camera-serial-test/include",
-                "/home/jorgehsm/tcc/swimfollower-robot/camera-serial-test/src",
+                "/home/jorgehsm/swimfollower-robot/camera-serial-test/include",
+                "/home/jorgehsm/swimfollower-robot/camera-serial-test/src",
                 "/home/jorgehsm/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/include/newlib/platform_include",
                 "/home/jorgehsm/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/include/freertos/include",
                 "/home/jorgehsm/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/include/freertos/include/esp_additions/freertos",
@@ -244,8 +244,8 @@
             "browse": {
                 "limitSymbolsToIncludedHeaders": true,
                 "path": [
-                    "/home/jorgehsm/tcc/swimfollower-robot/camera-serial-test/include",
-                    "/home/jorgehsm/tcc/swimfollower-robot/camera-serial-test/src",
+                    "/home/jorgehsm/swimfollower-robot/camera-serial-test/include",
+                    "/home/jorgehsm/swimfollower-robot/camera-serial-test/src",
                     "/home/jorgehsm/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/include/newlib/platform_include",
                     "/home/jorgehsm/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/include/freertos/include",
                     "/home/jorgehsm/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/include/freertos/include/esp_additions/freertos",
