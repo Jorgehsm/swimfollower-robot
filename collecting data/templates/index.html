@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Controle do Robô</title>
+    <style>
+        /* Reset básico */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            background-color: #4CAF50;
+            color: white;
+            padding: 20px 0;
+            margin: 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .container {
+            margin: 20px auto;
+            max-width: 800px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        img {
+            border-radius: 8px;
+            max-width: 100%;
+            height: auto;
+            border: 2px solid #ddd;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .slider-container {
+            margin-top: 20px;
+        }
+
+        input[type="range"] {
+            width: 60%;
+            margin: 0 10px;
+        }
+
+        #speedValue {
+            font-weight: bold;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Controle do Robô</h1>
+
+    <div class="container">
+        <!-- Feed da câmera -->
+        <img src="{{ url_for('video_feed') }}" alt="Feed da câmera">
+
+        <div class="controls">
+            <!-- Botão para iniciar/parar gravação -->
+            <div style="margin: 20px 0;">
+                <button onclick="toggleRecording()">Iniciar/Parar Gravação</button>
+            </div>
+
+            <!-- Slider para velocidade -->
+            <div class="slider-container">
+                <label for="speedRange">Velocidade:</label>
+                <input type="range" id="speedRange" min="0" max="255" value="0" oninput="setSpeed(this.value)">
+                <span id="speedValue">0</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleRecording() {
+            fetch('/toggle_recording', {method: 'POST'})
+                .then(response => response.text())
+                .then(data => alert(data));
+        }
+
+        function setSpeed(val) {
+            document.getElementById("speedValue").innerText = val;
+            fetch('/set_speed', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({speed: parseInt(val)})
+            });
+        }
+    </script>
+</body>
+</html>

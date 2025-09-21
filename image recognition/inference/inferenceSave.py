@@ -9,10 +9,10 @@ import threading
 model_path = 'yolov8n-face.pt'
 serial_port = '/dev/ttyUSB0'
 baud_rate = 115200
-video_source = '/dev/video1'
+video_source = '/dev/video0'
 confidence_threshold = 0.4
 output_video_path = "output.mp4"
-recording_fps = 60.0
+recording_fps = 30.0
 
 stop_flag = threading.Event()
 
@@ -27,8 +27,6 @@ latest_frame = None
 
 # ------------------ INITIALIZATION ------------------
 model = YOLO(model_path)
-
-
 
 # Serial connection
 try:

@@ -9,7 +9,7 @@ import os
 model_path = 'yolov8n-face.pt'             # Path to your trained YOLO model
 serial_port = '/dev/ttyUSB0'       # Serial port used (adjust as needed)
 baud_rate = 115200                 # Baud rate for serial communication
-video_source = '/dev/video1'                   # Camera index or path to video file
+video_source = '/dev/video0'                   # Camera index or path to video file
 confidence_threshold = 0.4         # YOLO confidence threshold
 discard_old_frames = 5  # How many frames to discard
 
