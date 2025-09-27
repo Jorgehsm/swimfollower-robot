@@ -18,8 +18,8 @@ void checkSerialInput()
 
 void motor(int vel)
 {
-    analogWrite(PWM_LEFT, abs(vel));
-    analogWrite(PWM_RIGHT, abs(vel) + 10);
+    ledcWrite(PWM_LEFT, abs(vel) - 10);
+    ledcWrite(PWM_RIGHT, abs(vel));
 }
 
 void control(float error)
