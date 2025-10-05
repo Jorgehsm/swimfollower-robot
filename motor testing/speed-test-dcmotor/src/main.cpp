@@ -7,22 +7,8 @@ uint32_t t = millis();
 
 void motor(int vel);
 
-void setup()
+void test()
 {
-  Serial.begin(115200);
-
-  // Configura o PWM
-  ledcSetup(PWM_CHANNEL, PWM_FREQ, PWM_RESOLUTION);
-  ledcAttachPin(PWM_LEFT, PWM_CHANNEL);
-
-  pinMode(IN1_LEFT, OUTPUT);
-  pinMode(IN2_LEFT, OUTPUT);
-  digitalWrite(IN1_LEFT, LOW);
-  digitalWrite(IN2_LEFT, HIGH);
-  encoderSetup();
-  t = millis();
-
-  delay(5000); // Wait for 1 second before starting the motor
   for (int i = 165; i <= 255; i += 15)
   {
     motor(i);
@@ -47,7 +33,30 @@ void setup()
     motor(i);
     delay(10);
   }
+}
 
+void setup()
+{
+  Serial.begin(115200);
+
+  // Configura o PWM
+  ledcSetup(PWM_CHANNEL, PWM_FREQ, PWM_RESOLUTION);
+  ledcAttachPin(PWM_LEFT, PWM_CHANNEL);
+
+  pinMode(IN1_LEFT, OUTPUT);
+  pinMode(IN2_LEFT, OUTPUT);
+  digitalWrite(IN1_LEFT, LOW);
+  digitalWrite(IN2_LEFT, HIGH);
+  encoderSetup();
+  t = millis();
+
+  delay(5000); // Wait for 5 second before starting the motor
+  test();
+
+  digitalWrite(IN1_LEFT, LOW);
+  digitalWrite(IN2_LEFT, HIGH);
+
+  test();
 }
 
 void loop()

@@ -2,9 +2,10 @@
 #define CONFIG_H
 
 #define ENCODER 4 
-#define PWM_LEFT 14
-#define IN1_LEFT 27
-#define IN2_LEFT 26
+
+#define PWM_LEFT 32
+#define IN1_LEFT 25
+#define IN2_LEFT 33
 
 #define ENCODER_PPR 10
 

@@ -3,10 +3,9 @@
 
 int pwm = 0;
 
-void motor(int vel)
+void motor(int vel, int channel)
 {
-  ledcWrite(PWM_CHANNEL_LEFT, abs(vel));
-  ledcWrite(PWM_CHANNEL_RIGHT, abs(vel));
+  ledcWrite(channel, abs(vel));
 }
 
 void setup()
@@ -18,26 +17,23 @@ void setup()
   ledcAttachPin(PWM_LEFT, PWM_CHANNEL_LEFT);
   ledcAttachPin(PWM_RIGHT, PWM_CHANNEL_RIGHT);
 
-  pinMode(IN1_LEFT, OUTPUT);
+  pinMode(IN1_LEFT, OUTPUT); // talves seja melhor inverter o robo e essa vira roda direita
   pinMode(IN2_LEFT, OUTPUT);
   pinMode(IN1_RIGHT, OUTPUT);
   pinMode(IN2_RIGHT, OUTPUT);
 
-  digitalWrite(IN1_LEFT, LOW);
+  digitalWrite(IN1_LEFT, LOW); // girando horário
   digitalWrite(IN2_LEFT, HIGH);
-  digitalWrite(IN1_RIGHT, LOW);
-  digitalWrite(IN2_RIGHT, HIGH);
+  digitalWrite(IN1_RIGHT, HIGH); // girando horário
+  digitalWrite(IN2_RIGHT, LOW);
 
-  Serial.setTimeout(10);
+  pwm = 255;
+  motor(pwm, PWM_CHANNEL_LEFT);
+  delay(15000);
+  pwm = 0;
+  motor(pwm, PWM_CHANNEL_LEFT);
 }
 
 void loop()
 {
-  if (Serial.available() > 0)
-  {
-    String val = Serial.readStringUntil('\n'); // até newline
-    int pwm = val.toInt();
-    motor(pwm);
-    Serial.println(pwm);
-  }
 }

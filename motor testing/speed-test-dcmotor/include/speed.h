@@ -4,7 +4,7 @@
 #include <Arduino.h>
 #include <config.h>
 
-volatile uint32_t delta;
+extern volatile uint32_t delta;
 
 void encoderISR();
 float calcSpeed();

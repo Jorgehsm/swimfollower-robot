@@ -99,7 +99,7 @@ def set_speed():
             print(f"Velocidade do motor definida para: {speed_value}")
 
             if ser is not None and ser.is_open:
-                ser.write(bytes([speed_value]))  # envia valor único (0-255)
+                ser.write(f"{speed_value}\n".encode())
 
             return "Velocidade atualizada com sucesso", 200
         else:
