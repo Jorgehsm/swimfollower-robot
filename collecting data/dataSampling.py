@@ -9,27 +9,26 @@ import json
 serial_port = '/dev/ttyUSB0'
 baud_rate = 115200
 video_source = '/dev/video0'
-recording_fps = 30.0
+capture_interval = 0.2  # 10 imagens por segundo
 
 # Conexão serial com o microcontrolador
 ser = None
 try:
     ser = serial.Serial(serial_port, baud_rate, timeout=1)
-    print(f"Conectado ao microcontrolador em {serial_port}")
+    print(f"[INFO] Conectado ao microcontrolador em {serial_port}")
 except Exception as e:
-    print(f"Erro ao abrir porta serial: {e}")
+    print(f"[ERRO] Falha ao abrir porta serial: {e}")
 
 # Espera pela câmera
-print("Aguardando câmera conectar...")
+print("[INFO] Aguardando câmera conectar...")
 while not os.path.exists(video_source):
     time.sleep(0.2)
 
 app = Flask(__name__)
 
 camera = cv2.VideoCapture(video_source)
-is_recording = False
-recording_thread = None
-video_writer = None
+is_capturing = False
+capture_thread = None
 speed_value = 0
 
 # ------------------ STREAM ------------------
@@ -45,25 +44,26 @@ def generate_frames():
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
-# ------------------ RECORDING ------------------
-def record_video():
-    global camera, is_recording, video_writer
+# ------------------ CAPTURA DE IMAGENS ------------------
+def capture_images():
+    global camera, is_capturing
 
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')  
-    filename = f"dataset_{time.strftime('%Y%m%d-%H%M%S')}.mp4"
-    width  = int(camera.get(cv2.CAP_PROP_FRAME_WIDTH))
-    height = int(camera.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    video_writer = cv2.VideoWriter(filename, fourcc, recording_fps, (width, height))
+    folder_name = f"dataset_{time.strftime('%Y%m%d-%H%M%S')}"
+    os.makedirs(folder_name, exist_ok=True)
+    print(f"[INFO] Salvando imagens em: {folder_name}")
 
-    while is_recording:
+    frame_count = 0
+
+    while is_capturing:
         success, frame = camera.read()
         if success:
-            video_writer.write(frame)
-        time.sleep(1.0 / recording_fps)
+            filename = os.path.join(folder_name, f"frame_{frame_count:05d}.jpg")
+            cv2.imwrite(filename, frame)
+            print(f"[INFO] Imagem salva: {filename}")
+            frame_count += 1
+        time.sleep(capture_interval)
 
-    if video_writer is not None:
-        video_writer.release()
-        print(f"Gravação finalizada. Arquivo salvo como '{filename}'")
+    print(f"[INFO] Captura finalizada. Total de imagens: {frame_count}")
 
 # ------------------ ROUTES ------------------
 @app.route('/')
@@ -74,19 +74,19 @@ def index():
 def video_feed():
     return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
-@app.route('/toggle_recording', methods=['POST'])
-def toggle_recording():
-    global is_recording, recording_thread
-    if not is_recording:
-        is_recording = True
-        recording_thread = threading.Thread(target=record_video)
-        recording_thread.start()
-        return "Gravação iniciada", 200
+@app.route('/toggle_capture', methods=['POST'])
+def toggle_capture():
+    global is_capturing, capture_thread
+    if not is_capturing:
+        is_capturing = True
+        capture_thread = threading.Thread(target=capture_images)
+        capture_thread.start()
+        return "Captura iniciada", 200
     else:
-        is_recording = False
-        if recording_thread is not None:
-            recording_thread.join()
-        return "Gravação parada", 200
+        is_capturing = False
+        if capture_thread is not None:
+            capture_thread.join()
+        return "Captura parada", 200
 
 @app.route('/set_speed', methods=['POST'])
 def set_speed():
@@ -96,7 +96,7 @@ def set_speed():
         new_speed = data.get('speed')
         if new_speed is not None and 0 <= new_speed <= 255:
             speed_value = int(new_speed)
-            print(f"Velocidade do motor definida para: {speed_value}")
+            print(f"[INFO] Velocidade do motor definida para: {speed_value}")
 
             if ser is not None and ser.is_open:
                 ser.write(f"{speed_value}\n".encode())

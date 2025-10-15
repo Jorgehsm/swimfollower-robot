@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <title>Controle do Robô</title>
@@ -19,7 +20,7 @@
             color: white;
             padding: 20px 0;
             margin: 0;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
 
         .container {
@@ -28,7 +29,7 @@
             padding: 20px;
             background-color: white;
             border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         }
 
         img {
@@ -68,6 +69,7 @@
         }
     </style>
 </head>
+
 <body>
     <h1>Controle do Robô</h1>
 
@@ -78,7 +80,7 @@
         <div class="controls">
             <!-- Botão para iniciar/parar gravação -->
             <div style="margin: 20px 0;">
-                <button onclick="toggleRecording()">Iniciar/Parar Gravação</button>
+                <button onclick="toggleCapture()">Iniciar/Parar Captura</button>
             </div>
 
             <!-- Slider para velocidade -->
@@ -91,20 +93,22 @@
     </div>
 
     <script>
-        function toggleRecording() {
-            fetch('/toggle_recording', {method: 'POST'})
+        function toggleCapture() {
+            fetch('/toggle_capture', { method: 'POST' })
                 .then(response => response.text())
                 .then(data => alert(data));
         }
+
 
         function setSpeed(val) {
             document.getElementById("speedValue").innerText = val;
             fetch('/set_speed', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({speed: parseInt(val)})
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ speed: parseInt(val) })
             });
         }
     </script>
 </body>
+
 </html>
