@@ -10,8 +10,9 @@
 #define IN1_RIGHT 25
 #define IN2_RIGHT 33
 
-#define S1 35
-#define S2 34
+// LOW = N detecta / HIGH = Detecta
+#define S1 35 //Laranja
+#define S2 34 //Amarelo
 
 #define ENCODER_PPR 10
 

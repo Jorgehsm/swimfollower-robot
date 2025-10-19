@@ -5,7 +5,7 @@ int pwm = 0;
 
 void motor(int vel)
 {
-  ledcWrite(PWM_CHANNEL_LEFT, abs(vel));
+  ledcWrite(PWM_CHANNEL_LEFT, abs(vel)) - 10;
   ledcWrite(PWM_CHANNEL_RIGHT, abs(vel));
 }
 
