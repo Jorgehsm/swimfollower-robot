@@ -3,10 +3,21 @@
 
 int pwm = 0;
 
-void motor(int vel)
+bool S1_status = 0, S2_status = 0;
+
+void motor(uint8_t vel)
 {
-  ledcWrite(PWM_CHANNEL_LEFT, abs(vel)) - 10;
-  ledcWrite(PWM_CHANNEL_RIGHT, abs(vel));
+  int16_t vel_l = vel - 55;
+  if (vel_l < 0)
+  {
+    vel_l = 0;
+  }
+
+  ledcWrite(PWM_CHANNEL_LEFT, vel_l);
+  ledcWrite(PWM_CHANNEL_RIGHT, vel);
+  /*Serial.print(vel_l);
+  Serial.print(", ");
+  Serial.println(vel);*/
 }
 
 void setup()
@@ -25,8 +36,11 @@ void setup()
 
   digitalWrite(IN1_LEFT, LOW);
   digitalWrite(IN2_LEFT, HIGH);
-  digitalWrite(IN1_RIGHT, LOW);
-  digitalWrite(IN2_RIGHT, HIGH);
+  digitalWrite(IN1_RIGHT, HIGH);
+  digitalWrite(IN2_RIGHT, LOW);
+
+  pinMode(S1, INPUT);
+  pinMode(S2, INPUT);
 
   Serial.setTimeout(10);
 }
@@ -40,4 +54,14 @@ void loop()
     motor(pwm);
     Serial.println(pwm);
   }
+
+  /*if (digitalRead(S1) != S1_status || digitalRead(S2) != S2_status)
+  {
+    Serial.print(digitalRead(S1));
+    Serial.print(", ");
+    Serial.println(digitalRead(S2));
+  }
+
+  S1_status = digitalRead(S1);
+  S2_status = digitalRead(S2);*/
 }
