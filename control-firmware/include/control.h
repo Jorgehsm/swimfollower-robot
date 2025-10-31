@@ -6,6 +6,7 @@
 void checkSerialInput();
 void control(float error);
 void controlSetup();
-void motor();
+void motor(int16_t vel);
+void checkSensor();
 
 #endif

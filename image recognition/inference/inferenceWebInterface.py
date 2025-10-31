@@ -105,7 +105,6 @@ def inference_thread():
                 offset = float(box_center_x - center_x)
             latest_offset = offset
 
-            # envia offset por serial SOMENTE se gravando, senão envia valor sentinela
             if ser is not None and ser.is_open:
                 try:
                     value_to_send = latest_offset if is_recording else 999.0

@@ -18,10 +18,11 @@
 
 #define MOVING_AVG_SIZE 10
 
-#define STOP_TIMEOUT 200000  //100 ms em microssegundos
+#define STOP_TIMEOUT 200000  //200 ms em microssegundos
 #define DEBOUNCE_US 17000 //17 ms
 
-#define PWM_CHANNEL 0
+#define PWM_CHANNEL_LEFT 0
+#define PWM_CHANNEL_RIGHT 1
 #define PWM_FREQ 15000      // 5 kHz
 #define PWM_RESOLUTION 8    // 8 bits -> duty 0-255
 
