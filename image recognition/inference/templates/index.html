@@ -6,25 +6,48 @@
     <style>
         body { font-family: Arial, sans-serif; background:#f0f2f5; text-align:center; margin:0; }
         h1 { background:#4CAF50; color:#fff; padding:16px 0; margin:0; }
-        .card { background:#fff; max-width:900px; margin:20px auto; padding:16px; border-radius:8px; }
+        .card { background:#fff; max-width:900px; margin:20px auto; padding:16px; border-radius:8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
         img { max-width:100%; border-radius:6px; border:1px solid #ddd; }
-        button { padding:10px 18px; border-radius:6px; border:none; background:#4CAF50; color:#fff; cursor:pointer; }
+        button { padding:10px 18px; border-radius:6px; border:none; background:#4CAF50; color:#fff; cursor:pointer; transition: background-color 0.3s; margin: 4px; }
+        button:hover { background: #45a049; }
         #status { margin-top:10px; font-weight:600; }
+        .gain-control { margin-top: 20px; padding: 15px; border-top: 1px solid #eee; }
+        .gain-control input { padding: 8px; margin: 0 5px; width: 60px; text-align: center; border: 1px solid #ccc; border-radius: 4px; }
+        .gain-control label { font-weight: bold; }
     </style>
 </head>
 <body>
     <h1>Controle do Robô</h1>
     <div class="card">
         <img id="cam" src="{{ url_for('video_feed') }}" alt="Feed">
+        
         <div style="margin-top:12px;">
             <button id="btn" onclick="toggle()">Iniciar gravação</button>
         </div>
+        
         <div id="status">Status: parado</div>
         <div id="info" style="margin-top:8px;"></div>
-    </div>
+
+        <div class="gain-control">
+            <h2>Ajuste de Ganhos PID</h2>
+            <label for="kp">Kp:</label>
+            <input type="number" id="kp" value="1.0" step="0.01">
+            
+            <label for="ki">Ki:</label>
+            <input type="number" id="ki" value="0.0" step="0.001">
+            
+            <label for="kd">Kd:</label>
+            <input type="number" id="kd" value="0.0" step="0.001">
+            
+            <button onclick="updateGains()" style="background:#007bff;">Atualizar Ganhos</button>
+            <div id="gain-message" style="margin-top: 8px; color: #333;"></div>
+        </div>
+        </div>
 
     <script>
         let recording = false;
+        
+        // Record
         async function toggle() {
             const res = await fetch('/toggle_recording', { method: 'POST' });
             const j = await res.json();
@@ -34,6 +57,51 @@
                 document.getElementById('status').innerText = recording ? 'Status: Gravando' : 'Status: Parado';
             } else {
                 alert('Erro: ' + JSON.stringify(j));
+            }
+        }
+        
+        // Send gains
+        async function updateGains() {
+            const kp = document.getElementById('kp').value;
+            const ki = document.getElementById('ki').value;
+            const kd = document.getElementById('kd').value;
+            const msgElement = document.getElementById('gain-message');
+            
+            if (isNaN(kp) || isNaN(ki) || isNaN(kd)) {
+                msgElement.innerText = 'Erro: Verifique se todos os campos são números.';
+                msgElement.style.color = 'red';
+                return;
+            }
+
+            msgElement.innerText = 'Enviando...';
+            msgElement.style.color = 'orange';
+
+            try {
+                const res = await fetch('/set_gains', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    // Envia os dados no formato JSON que a rota Flask espera
+                    body: JSON.stringify({ 
+                        kp: parseFloat(kp), 
+                        ki: parseFloat(ki), 
+                        kd: parseFloat(kd) 
+                    })
+                });
+
+                const j = await res.json();
+                
+                if (res.ok && j.status === 'success') {
+                    msgElement.innerText = `Ganhos atualizados! Kp:${j.kp}, Ki:${j.ki}, Kd:${j.kd}`;
+                    msgElement.style.color = 'green';
+                } else {
+                    msgElement.innerText = `Falha na atualização: ${j.reason || 'Erro desconhecido.'}`;
+                    msgElement.style.color = 'red';
+                }
+            } catch (e) {
+                msgElement.innerText = `Erro de conexão com o servidor: ${e.message}`;
+                msgElement.style.color = 'red';
             }
         }
 

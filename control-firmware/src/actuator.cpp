@@ -9,8 +9,8 @@ void spinCW()
     digitalWrite(IN2_LEFT, LOW);
     digitalWrite(IN1_RIGHT, LOW);
     digitalWrite(IN2_RIGHT, HIGH);
-    ledcWrite(PWM_CHANNEL_LEFT, 255);
-    ledcWrite(PWM_CHANNEL_RIGHT, 255);
+    ledcWrite(PWM_CHANNEL_LEFT, 200);
+    ledcWrite(PWM_CHANNEL_RIGHT, 200);
 }
 
 void spinCCW()
@@ -19,8 +19,8 @@ void spinCCW()
     digitalWrite(IN2_LEFT, HIGH);
     digitalWrite(IN1_RIGHT, LOW);
     digitalWrite(IN2_RIGHT, HIGH);
-    ledcWrite(PWM_CHANNEL_LEFT, 255);
-    ledcWrite(PWM_CHANNEL_RIGHT, 255);
+    ledcWrite(PWM_CHANNEL_LEFT, 200);
+    ledcWrite(PWM_CHANNEL_RIGHT, 200);
 }
 
 void stop()

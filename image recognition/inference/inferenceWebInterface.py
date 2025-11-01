@@ -207,6 +207,38 @@ def status():
         'is_recording': is_recording
     })
 
+@app.route('/set_gains', methods=['POST'])
+def set_gains():
+    """Recebe e envia os novos ganhos PID para o microcontrolador via Serial."""
+    global ser
+
+    try:
+        data = request.get_json()
+        kp = float(data.get('kp', 0.0))
+        ki = float(data.get('ki', 0.0))
+        kd = float(data.get('kd', 0.0))
+    except Exception:
+        return jsonify({'status': 'fail', 'reason': 'Dados JSON invalidos ou faltantes.'}), 400
+
+    command = f"{kp:.4f},{ki:.4f},{kd:.4f}\n"
+
+    if ser is not None and ser.is_open:
+        try:
+            ser.write(command.encode('utf-8'))
+            print(f"[INFO] Ganhos enviados: {command.strip()}")
+            return jsonify({
+                'status': 'success', 
+                'kp': kp, 
+                'ki': ki, 
+                'kd': kd,
+                'sent_command': command.strip()
+            }), 200
+        except Exception as e:
+            print(f"[ERRO] Falha ao enviar ganhos serialmente: {e}")
+            return jsonify({'status': 'fail', 'reason': f'Falha Serial: {e}'}), 500
+    else:
+        return jsonify({'status': 'fail', 'reason': 'Conexao Serial nao esta ativa.'}), 503
+
 # ------------------ START ------------------
 if __name__ == '__main__':
     # threads
