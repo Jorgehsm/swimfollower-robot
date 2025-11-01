@@ -4,7 +4,7 @@
 #include <control.h>
 #include <actuator.h>
 
-float kp = 1, ki = 0, kd = 0, last_error = 0, error_deriv = 0, error_int = 0;
+float kp = 0.5, ki = 0.1, kd = 0, last_error = 0, error_deriv = 0, error_int = 0;
 
 bool S1_status = 0, S2_status = 0;
 
@@ -12,8 +12,8 @@ uint32_t t = 0;
 
 void checkSensor()
 {
-    //S1_status = digitalRead(S1);
-    //S2_status = digitalRead(S2);
+    S1_status = digitalRead(S1);
+    S2_status = digitalRead(S2);
 }
 
 void checkSerialInput()
@@ -74,12 +74,14 @@ void checkSerialInput()
                 }
                 else
                 {
+                    checkSensor();
                     control(error);
                 }
             }
             // Trata o caso de erro ser 0.0 (pode ser intencional ou falha na conversao)
             else if (input_string.equals("0") || input_string.equals("0.0"))
             {
+                checkSensor();
                 control(0.0f);
             }
 
@@ -96,27 +98,23 @@ void motor(int16_t vel)
 {
     if (S1_status == LOW && S2_status == LOW)
     {
-        if (vel >= 0)
+        if (vel <= 0)
         {
             forward(abs(vel));
-            Serial.print("Frente, ");
-            Serial.println(vel);
         }
 
-        else if (vel < 0)
+        else if (vel > 0)
         {
             backwards(abs(vel));
-            Serial.print("Atras, ");
-            Serial.println(vel);
         }
     }
     else if (S1_status == HIGH && S2_status == LOW)
     {
-        spinCW();
+        spinCCW();
     }
     else if (S1_status == LOW && S2_status == HIGH)
     {
-        spinCCW();
+        //spinCW();
     }
     else
     {

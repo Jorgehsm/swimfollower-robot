@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <config.h>
+#include <actuator.h>
 
 int pwm = 0;
 
@@ -7,17 +8,7 @@ bool S1_status = 0, S2_status = 0;
 
 void motor(uint8_t vel)
 {
-  int16_t vel_l = vel - 55;
-  if (vel_l < 0)
-  {
-    vel_l = 0;
-  }
-
-  ledcWrite(PWM_CHANNEL_LEFT, vel_l);
-  ledcWrite(PWM_CHANNEL_RIGHT, vel);
-  /*Serial.print(vel_l);
-  Serial.print(", ");
-  Serial.println(vel);*/
+  forward(vel);
 }
 
 void setup()
