@@ -34,7 +34,6 @@ camera = cv2.VideoCapture(VIDEO_SOURCE)
 if not camera.isOpened():
     raise RuntimeError(f"Falha ao abrir câmera {VIDEO_SOURCE}")
 
-# YOLO (carrega fora da thread para evitar recarga)
 model = YOLO(MODEL_PATH)
 
 # ------------------ SHARED STATE ------------------
@@ -55,7 +54,6 @@ def capture_thread():
     while running:
         ret, frame = camera.read()
         if not ret:
-            # tenta reabrir se falhar
             camera.release()
             time.sleep(0.5)
             camera = cv2.VideoCapture(VIDEO_SOURCE)
@@ -63,7 +61,6 @@ def capture_thread():
             continue
         with frame_lock:
             latest_frame = frame
-        # pequena pausa para não saturar CPU quando camera é muito rápida
         time.sleep(0.005)
 
 def serial_read_thread():
@@ -78,7 +75,6 @@ def serial_read_thread():
                 if line:
                     latest_speed = line
         except Exception:
-            # ignora erros transitórios
             pass
         time.sleep(0.03)
 
@@ -169,33 +165,65 @@ def index():
 def video_feed():
     return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
+#old toggle recording
+#@app.route('/toggle_recording', methods=['POST'])
+#def toggle_recording():
+#    """Ativa/desativa gravação. Responde JSON."""
+#    global is_recording, record_writer
+#    
+#    with record_lock:
+#        if not is_recording:
+#            # start recording: cria writer
+#            fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+#            filename = f"record_{time.strftime('%Y%m%d-%H%M%S')}.mp4"
+#            width = 1280
+#            height = 720
+#            record_writer = cv2.VideoWriter(filename, fourcc, RECORDING_FPS, (width, height))
+#            if not record_writer.isOpened():
+#                return jsonify({'status': 'fail', 'reason': 'VideoWriter falhou'}), 500
+#            is_recording = True
+#            print(f"[INFO] Gravando em {filename}")
+#            return jsonify({'status': 'recording_started', 'file': filename}), 200
+#        else:
+#            # stop recording: sinaliza e fecha writer
+#            is_recording = False
+#            if record_writer is not None:
+#                try:
+#                    record_writer.release()
+#                except Exception:
+#                    pass
+#                record_writer = None
+#            print("[INFO] Gravação parada")
+#            return jsonify({'status': 'recording_stopped'}), 200
+        
 @app.route('/toggle_recording', methods=['POST'])
 def toggle_recording():
-    """Ativa/desativa gravação. Responde JSON."""
     global is_recording, record_writer
+
     with record_lock:
         if not is_recording:
-            # start recording: cria writer
-            fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-            filename = f"record_{time.strftime('%Y%m%d-%H%M%S')}.mp4"
-            width = 1280
-            height = 720
-            record_writer = cv2.VideoWriter(filename, fourcc, RECORDING_FPS, (width, height))
+            fourcc = cv2.VideoWriter_fourcc(*'XVID')
+            filename = f"record_{time.strftime('%Y%m%d-%H%M%S')}.avi"
+            record_writer = cv2.VideoWriter(filename, fourcc, RECORDING_FPS, (1280, 720))
             if not record_writer.isOpened():
+                record_writer = None
                 return jsonify({'status': 'fail', 'reason': 'VideoWriter falhou'}), 500
             is_recording = True
             print(f"[INFO] Gravando em {filename}")
             return jsonify({'status': 'recording_started', 'file': filename}), 200
         else:
-            # stop recording: sinaliza e fecha writer
-            is_recording = False
-            if record_writer is not None:
-                try:
-                    record_writer.release()
-                except Exception:
-                    pass
-                record_writer = None
-            print("[INFO] Gravação parada")
+            # parar gravação de forma segura
+            print("[INFO] Parando gravação...")
+            is_recording = False  # avisa a thread para parar
+            time.sleep(0.1)       # deixa ela sair do ciclo de escrita
+            with record_lock:
+                if record_writer is not None:
+                    try:
+                        record_writer.release()
+                    except Exception as e:
+                        print(f"[WARN] Erro ao fechar VideoWriter: {e}")
+                    record_writer = None
+            print("[INFO] Gravação parada com segurança")
             return jsonify({'status': 'recording_stopped'}), 200
 
 @app.route('/status')
@@ -259,6 +287,13 @@ if __name__ == '__main__':
         except Exception:
             pass
         if ser is not None and ser.is_open:
+            try:
+                stop_command = "999.00\n" 
+                ser.write(stop_command.encode('utf-8'))
+                time.sleep(0.1)
+            except Exception as e:
+                print(f"[WARN] Falha ao enviar comando 999: {e}")
+            
             try:
                 ser.close()
             except Exception:
