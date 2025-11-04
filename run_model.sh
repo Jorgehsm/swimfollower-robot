@@ -1,8 +1,8 @@
 #!/bin/bash
 
-SCRIPT_PATH="./collecting data"
-VENV_PATH="../venv"
-PYTHON_SCRIPT="./dataSampling.py"
+SCRIPT_PATH="./image recognition/inference/acquiring_model"
+VENV_PATH="../../../venv"
+PYTHON_SCRIPT="./model.py"
 PYTHON_EXECUTABLE="${VENV_PATH}/bin/python"
 
 # --- Script Execution ---

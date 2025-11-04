@@ -6,6 +6,8 @@ import os
 import serial
 import json
 
+#use firmware WebServerControl
+
 serial_port = '/dev/ttyUSB0'
 baud_rate = 115200
 video_source = '/dev/video0'
