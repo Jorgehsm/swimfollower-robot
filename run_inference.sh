@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SCRIPT_PATH="./image recognition/inference/inference_control"
+SCRIPT_PATH="./image_recognition/inference/inference_control"
 VENV_PATH="../../../venv"
 PYTHON_SCRIPT="./inferenceWebInterface.py"
 PYTHON_EXECUTABLE="${VENV_PATH}/bin/python"

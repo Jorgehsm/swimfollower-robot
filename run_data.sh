@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SCRIPT_PATH="./collecting data"
+SCRIPT_PATH="./collecting_data"
 VENV_PATH="../venv"
 PYTHON_SCRIPT="./dataSampling.py"
 PYTHON_EXECUTABLE="${VENV_PATH}/bin/python"
