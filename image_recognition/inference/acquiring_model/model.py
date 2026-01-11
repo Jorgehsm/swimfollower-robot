@@ -5,6 +5,7 @@ import time
 import os
 import serial
 import json
+import datetime
 from ultralytics import YOLO
 
 #use firmware WebServerControl
@@ -14,7 +15,7 @@ serial_port = '/dev/ttyUSB0'
 baud_rate = 115200
 video_source = '/dev/video0'
 capture_interval = 0.2  # intervalo entre registros de offset
-MODEL_PATH = 'yolov8n-face.pt'
+MODEL_PATH = 'yolov8n-face_ncnn_model'
 CONF_THRESHOLD = 0.4
 
 # ------------------ SERIAL ------------------
@@ -41,6 +42,7 @@ capture_thread = None
 inference_thread_obj = None
 latest_frame = None
 latest_offset = 0.0
+latest_inference_time = 0.0
 speed_value = 0
 frame_lock = threading.Lock()
 running = True
@@ -49,6 +51,9 @@ running = True
 print("[INFO] Carregando modelo YOLO...")
 model = YOLO(MODEL_PATH)
 print("[INFO] Modelo carregado com sucesso.")
+
+camera.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
 # ------------------ STREAM ------------------
 def generate_frames():
@@ -70,7 +75,7 @@ def generate_frames():
 # ------------------ INFERÊNCIA ------------------
 def inference_thread():
     """Faz inferência no frame mais recente, calcula offset e envia por serial."""
-    global latest_frame, latest_offset, ser, running, is_capturing, speed_value
+    global latest_frame, latest_offset, ser, running, is_capturing, speed_value, latest_inference_time
 
     while running:
         with frame_lock:
@@ -81,7 +86,10 @@ def inference_thread():
             continue
 
         try:
+            start_time = time.time()
             results = model(frame, conf=CONF_THRESHOLD, verbose=False, device='cpu')
+            
+
             boxes = results[0].boxes
             h, w = frame.shape[:2]
             center_x = w // 2
@@ -106,28 +114,32 @@ def inference_thread():
         except Exception as e:
             print(f"[WARN] Erro na inferência: {e}")
 
-        time.sleep(0.05)
+        time.sleep(0.01)
+        end_time = time.time()
+        latest_inference_time = (end_time - start_time) * 1000
 
 # ------------------ CAPTURA ------------------
 def capture_data():
     """Salva apenas timestamp e offset enquanto a gravação está ativa."""
-    global is_capturing, latest_offset
+    global is_capturing, latest_offset, latest_inference_time
 
     folder_name = f"dataset_{time.strftime('%Y%m%d-%H%M%S')}"
     os.makedirs(folder_name, exist_ok=True)
     csv_path = os.path.join(folder_name, "offset_log.csv")
 
-    print(f"[INFO] Registrando offsets em: {csv_path}")
-
     with open(csv_path, 'w') as f:
-        f.write("timestamp,offset\n")
+            f.write("timestamp,offset,inference_time_ms\n")
 
-        while is_capturing:
-            timestamp = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
-            f.write(f"{timestamp},{latest_offset:.2f}\n")
-            f.flush()
-            print(f"[INFO] {timestamp} | offset={latest_offset:.2f}")
-            time.sleep(capture_interval)
+            while is_capturing:
+                now = time.time()
+                milliseconds = int((now - int(now)) * 1000)
+                timestamp_ms = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(now)) + f".{milliseconds:03d}"
+
+                f.write(f"{timestamp_ms},{latest_offset:.2f},{latest_inference_time:.2f}\n")
+                f.flush()
+
+                print(f"[INFO] {timestamp_ms} | offset={latest_offset:.2f} | inf={latest_inference_time:.2f}ms")
+                time.sleep(capture_interval)
 
     print("[INFO] Captura de dados finalizada.")
 
