@@ -9,11 +9,12 @@ from ultralytics import YOLO
 #use firmware control-firmware
 
 # ------------------ CONFIG ------------------
-MODEL_PATH = 'yolov8n-face.pt'
+#MODEL_PATH = 'yolov8n-face.pt'
+MODEL_PATH = 'yolov8n-face_ncnn_model'
 SERIAL_PORT = '/dev/ttyUSB0'
 BAUD_RATE = 115200
-VIDEO_SOURCE = '/dev/video0'   # ou 0
-RECORDING_FPS = 30.0
+VIDEO_SOURCE = '/dev/video0'
+RECORDING_FPS = 20.0
 CONF_THRESHOLD = 0.4
 
 # ------------------ INIT ------------------
@@ -51,7 +52,7 @@ running = True                 # para desligar limpo se desejar
 # ------------------ THREADS ------------------
 
 def capture_thread():
-    """Lê continuamente da câmera e atualiza latest_frame (sem enfileirar)."""
+    """Lê continuamente da câmera e atualiza latest_frame"""
     global latest_frame, running, camera
     while running:
         ret, frame = camera.read()
@@ -112,31 +113,45 @@ def inference_thread():
         except Exception as e:
             print(f"[WARN] inference error: {e}")
 
-        time.sleep(0.01)
-
+        time.sleep(0.1)
 def recorder_thread():
     global is_recording, record_writer, latest_frame, running
+    
     while running:
+        loop_start = time.time()
+        
         with record_lock:
             writer = record_writer
             active = is_recording
 
-        if writer is None or not active or not writer.isOpened():
+        if not active or writer is None or not writer.isOpened():
             time.sleep(0.05)
             continue
 
+        # Captura e Gravação
         with frame_lock:
-            frame_copy = None if latest_frame is None else latest_frame.copy()
+            frame_copy = latest_frame.copy() if latest_frame is not None else None
 
         if frame_copy is not None:
             try:
+                write_start = time.time()
                 writer.write(frame_copy)
+                write_end = time.time()
+
             except Exception as e:
                 print(f"[WARN] erro ao escrever frame: {e}")
 
-        time.sleep(1.0 / RECORDING_FPS)
+        # Controle de cadência (FPS)
+        elapsed_in_loop = time.time() - loop_start
+        sleep_time = (1.0 / RECORDING_FPS) - elapsed_in_loop
+        elapsed_in_loop = (time.time() - loop_start)
 
+        sleep_time = (1.0 / RECORDING_FPS) - elapsed_in_loop
 
+        if sleep_time > 0:
+            time.sleep(sleep_time)
+        else:
+            pass
 
 # ------------------ STREAM ------------------
 def generate_frames():
@@ -149,7 +164,6 @@ def generate_frames():
             time.sleep(0.02)
             continue
 
-        # Conversão rápida (sem locks longos)
         ret, buffer = cv2.imencode('.jpg', frame_copy, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
         if not ret:
             continue
@@ -157,7 +171,7 @@ def generate_frames():
         frame_bytes = buffer.tobytes()
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
-        time.sleep(1/RECORDING_FPS)  # ~30 FPS de atualização
+        time.sleep(0.01) 
 
 # ------------------ ROUTES ------------------
 @app.route('/')
@@ -191,7 +205,6 @@ def toggle_recording():
         else:
             print("[INFO] Parando gravação...")
 
-            # Fecha writer com segurança dentro do lock
             if record_writer is not None:
                 try:
                     record_writer.release()
@@ -201,14 +214,10 @@ def toggle_recording():
                 finally:
                     record_writer = None
 
-            # só depois de liberar o writer, muda o flag
             is_recording = False
 
-    # pequena espera fora do lock para garantir que a thread pare de tentar escrever
-    time.sleep(0.2)
-
-    print("[INFO] Gravação parada")
-    return jsonify({'status': 'recording_stopped'}), 200
+            print("[INFO] Gravação parada")
+            return jsonify({'status': 'recording_stopped'}), 200
 
 @app.route('/status')
 def status():

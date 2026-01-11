@@ -10,6 +10,7 @@ from ultralytics import YOLO
 
 # ------------------ CONFIG ------------------
 MODEL_PATH = 'yolov8n-face.pt'
+#MODEL_PATH = 'yolov8n-face_ncnn_model'
 SERIAL_PORT = '/dev/ttyUSB0'
 BAUD_RATE = 115200
 VIDEO_SOURCE = '/dev/video0'   # ou 0
@@ -112,7 +113,7 @@ def inference_thread():
         except Exception as e:
             print(f"[WARN] inference error: {e}")
 
-        time.sleep(0.01)
+        time.sleep(0.03)
 
 def recorder_thread():
     global is_recording, record_writer, latest_frame, running
@@ -160,7 +161,7 @@ def generate_frames():
         frame_bytes = buffer.tobytes()
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
-        time.sleep(1/RECORDING_FPS) 
+        time.sleep(0.01) 
 
 # ------------------ ROUTES ------------------
 @app.route('/')
