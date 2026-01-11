@@ -2,7 +2,7 @@
 
 SCRIPT_PATH="./image_recognition/inference/inference_control"
 VENV_PATH="../../../venv"
-PYTHON_SCRIPT="./inferenceWebInterface_test.py"
+PYTHON_SCRIPT="./inferenceWebInterface.py"
 PYTHON_EXECUTABLE="${VENV_PATH}/bin/python"
 
 # --- Script Execution ---
