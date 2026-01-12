@@ -121,9 +121,9 @@ def inference_thread():
 # ------------------ CAPTURA ------------------
 def capture_data():
     """Salva apenas timestamp e offset enquanto a gravação está ativa."""
-    global is_capturing, latest_offset, latest_inference_time
+    global is_capturing, latest_offset, latest_inference_time, speed_value
 
-    folder_name = f"dataset_{time.strftime('%Y%m%d-%H%M%S')}"
+    folder_name = f"dataset_{time.strftime('%Y%m%d-%H%M%S')}_{speed_value}"
     os.makedirs(folder_name, exist_ok=True)
     csv_path = os.path.join(folder_name, "offset_log.csv")
 
