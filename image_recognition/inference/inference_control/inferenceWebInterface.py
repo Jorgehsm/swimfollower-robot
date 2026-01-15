@@ -4,6 +4,7 @@ import threading
 import time
 import os
 import serial
+import csv
 from ultralytics import YOLO
 
 #use firmware control-firmware
@@ -16,6 +17,10 @@ BAUD_RATE = 115200
 VIDEO_SOURCE = '/dev/video0'
 RECORDING_FPS = 20.0
 CONF_THRESHOLD = 0.4
+
+csv_file = None
+csv_writer = None
+record_start_time = None
 
 # ------------------ INIT ------------------
 app = Flask(__name__)
@@ -115,7 +120,7 @@ def inference_thread():
 
         time.sleep(0.1)
 def recorder_thread():
-    global is_recording, record_writer, latest_frame, running
+    global is_recording, record_writer, latest_frame, running, csv_writer, record_start_time
     
     while running:
         loop_start = time.time()
@@ -136,6 +141,11 @@ def recorder_thread():
             try:
                 write_start = time.time()
                 writer.write(frame_copy)
+                with record_lock:
+                    if csv_writer is not None:
+                        timestamp = time.time() - record_start_time
+                        csv_writer.writerow([f"{timestamp:.6f}", f"{latest_offset:.2f}"])
+                        csv_file.flush()
                 write_end = time.time()
 
             except Exception as e:
@@ -184,7 +194,7 @@ def video_feed():
         
 @app.route('/toggle_recording', methods=['POST'])
 def toggle_recording():
-    global is_recording, record_writer
+    global is_recording, record_writer, csv_file, csv_writer, record_start_time
 
     with record_lock:
         if not is_recording:
@@ -197,6 +207,13 @@ def toggle_recording():
                 record_writer.release()
                 record_writer = None
                 return jsonify({'status': 'fail', 'reason': 'Falha ao abrir VideoWriter'}), 500
+            
+            record_start_time = time.time()
+
+            csv_filename = filename.replace('.avi', '.csv')
+            csv_file = open(csv_filename, mode='w', newline='')
+            csv_writer = csv.writer(csv_file)
+            csv_writer.writerow(['timestamp_s', 'offset_px'])
 
             is_recording = True
             print(f"[INFO] Gravando em {filename}")
@@ -215,6 +232,16 @@ def toggle_recording():
                     record_writer = None
 
             is_recording = False
+
+            if csv_file is not None:
+                try:
+                    csv_file.flush()
+                    csv_file.close()
+                except Exception:
+                    pass
+                finally:
+                    csv_file = None
+                    csv_writer = None
 
             print("[INFO] Gravação parada")
             return jsonify({'status': 'recording_stopped'}), 200
