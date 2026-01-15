@@ -4,7 +4,7 @@
 #include <control.h>
 #include <actuator.h>
 
-float kp = 0, ki = 0, kd = 0, last_error = 0, error_deriv = 0, error_int = 0;
+float kp = 2, ki = 0.4, kd = 0.25, last_error = 0, error_deriv = 0, error_int = 0;
 
 bool S1_status = 0, S2_status = 0;
 
@@ -14,6 +14,14 @@ void checkSensor()
 {
     S1_status = digitalRead(S1);
     S2_status = digitalRead(S2);
+}
+
+void resetControl()
+{
+    last_error = 0.0f;
+    error_deriv = 0.0f;
+    error_int = 0.0f;
+    t = millis();
 }
 
 void checkSerialInput()
@@ -71,7 +79,9 @@ void checkSerialInput()
                 {
                     control(0.0f);
                     stop();
+                    resetControl(); // <<< ESSENCIAL
                 }
+
                 else
                 {
                     checkSensor();
@@ -114,7 +124,7 @@ void motor(int16_t vel)
     }
     else if (S1_status == LOW && S2_status == HIGH)
     {
-        //spinCW();
+        // spinCW();
     }
     else
     {
@@ -125,14 +135,15 @@ void motor(int16_t vel)
 void control(float error)
 {
 
-        if (fabs(error) < DEADZONE)
+    if (fabs(error) < DEADZONE)
     {
         error = 0.0f;
     }
 
     uint32_t now = millis();
     uint32_t dt = (now - t);
-    if (dt == 0) dt = 1;
+    if (dt == 0)
+        dt = 1;
     t = now;
     float dt_s = dt * 0.001f;
 
@@ -171,5 +182,6 @@ void controlSetup()
     pinMode(S1, INPUT);
     pinMode(S2, INPUT);
 
+    resetControl();
     t = millis();
 }
