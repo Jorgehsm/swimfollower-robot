@@ -26,6 +26,8 @@
 #define PWM_FREQ 15000      // 5 kHz
 #define PWM_RESOLUTION 8    // 8 bits -> duty 0-255
 
-#define WHEEL_DIAMETER 220 //wheel radius in mm
+#define WHEEL_DIAMETER 305 //wheel radius in mm
+
+#define DEADZONE 15.0f
 
 #endif // CONFIG_H

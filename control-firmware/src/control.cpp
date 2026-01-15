@@ -4,7 +4,7 @@
 #include <control.h>
 #include <actuator.h>
 
-float kp = 0.5, ki = 0.1, kd = 0, last_error = 0, error_deriv = 0, error_int = 0;
+float kp = 0, ki = 0, kd = 0, last_error = 0, error_deriv = 0, error_int = 0;
 
 bool S1_status = 0, S2_status = 0;
 
@@ -124,30 +124,31 @@ void motor(int16_t vel)
 
 void control(float error)
 {
+
+        if (fabs(error) < DEADZONE)
+    {
+        error = 0.0f;
+    }
+
     uint32_t now = millis();
     uint32_t dt = (now - t);
+    if (dt == 0) dt = 1;
     t = now;
+    float dt_s = dt * 0.001f;
 
-    error_int += (0.0005f * (last_error + error) * (dt));
-
-    error_deriv = (error - last_error) / 0.001 * dt;
+    error_deriv = (error - last_error) / (dt_s);
 
     float u = kp * error + ki * error_int + kd * error_deriv;
 
-    if (u >= 100)
+    if (u < 255 && u > -255)
     {
-        u = 100;
-        error_int -= (0.0005f * (last_error + error) * (dt));
-    }
-    else if (u <= -100)
-    {
-        u = -100;
-        error_int -= (0.0005f * (last_error + error) * (dt));
+        error_int += 0.5f * (last_error + error) * dt_s;
     }
 
+    u = constrain(u, -255, 255);
     last_error = error;
 
-    float pwm = u * 255.0 / 100.0;
+    float pwm = u;
     motor(int(pwm));
 }
 
