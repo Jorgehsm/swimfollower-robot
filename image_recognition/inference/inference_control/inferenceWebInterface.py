@@ -15,7 +15,7 @@ MODEL_PATH = 'yolov8n-face_ncnn_model'
 SERIAL_PORT = '/dev/ttyUSB0'
 BAUD_RATE = 115200
 VIDEO_SOURCE = '/dev/video0'
-RECORDING_FPS = 20.0
+RECORDING_FPS = 15.0
 CONF_THRESHOLD = 0.4
 
 csv_file = None

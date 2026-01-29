@@ -10,36 +10,36 @@ import matplotlib.pyplot as plt
 #]
 
 ## --- Lista de CSVs 220 ---
-#csv_paths = [
-#    r"C:\Users\jhdac\Git\swimfollower-robot\image_recognition\inference\acquiring_model\treated_data\dataset_20260111-180541_220\offset_log.csv",
-#    r"C:\Users\jhdac\Git\swimfollower-robot\image_recognition\inference\acquiring_model\treated_data\dataset_20260111-180719_220\offset_log.csv",
-#    r"C:\Users\jhdac\Git\swimfollower-robot\image_recognition\inference\acquiring_model\treated_data\dataset_20260111-180749_220\offset_log.csv", 
-#]
-
-# --- Lista de CSVs 200 ---
 csv_paths = [
-    r"C:\Users\jhdac\Git\swimfollower-robot\image_recognition\inference\acquiring_model\treated_data\dataset_20260111-180916_200\offset_log.csv",
-    r"C:\Users\jhdac\Git\swimfollower-robot\image_recognition\inference\acquiring_model\treated_data\dataset_20260111-181000_200\offset_log.csv",
-    r"C:\Users\jhdac\Git\swimfollower-robot\image_recognition\inference\acquiring_model\treated_data\dataset_20260111-181035_200\offset_log.csv", 
+    r"C:\Users\jhdac\Git\swimfollower-robot\image_recognition\inference\acquiring_model\treated_data\dataset_20260111-180541_220\offset_log.csv",
+    r"C:\Users\jhdac\Git\swimfollower-robot\image_recognition\inference\acquiring_model\treated_data\dataset_20260111-180719_220\offset_log.csv",
+    r"C:\Users\jhdac\Git\swimfollower-robot\image_recognition\inference\acquiring_model\treated_data\dataset_20260111-180749_220\offset_log.csv", 
 ]
 
-# --- Modelo ---
+## --- Lista de CSVs 200 ---
+#csv_paths = [
+#    r"C:\Users\jhdac\Git\swimfollower-robot\image_recognition\inference\acquiring_model\treated_data\dataset_20260111-180916_200\offset_log.csv",
+#    r"C:\Users\jhdac\Git\swimfollower-robot\image_recognition\inference\acquiring_model\treated_data\dataset_20260111-181000_200\offset_log.csv",
+#    r"C:\Users\jhdac\Git\swimfollower-robot\image_recognition\inference\acquiring_model\treated_data\dataset_20260111-181035_200\offset_log.csv", 
+#]
+
+# --- Model Parameters ---
 K = 1.011
-duty = 200
-delay = 0.5  # atraso de inferência em segundos
+duty = 220
+delay = 1.25  # Inference delay in seconds
 
-n = len(csv_paths)
-fig, axes = plt.subplots(1, n, figsize=(4*n, 4), sharex=False)
+# Plotting setup: Single figure
+plt.figure(figsize=(10, 6))
 
-# Garante que axes seja iterável quando n = 1
-if n == 1:
-    axes = [axes]
+all_initial_offsets = []
+max_time = 0
+experimental_data = []
 
+# 1. Read and store experimental data
 for idx, csv_path in enumerate(csv_paths):
     timestamps = []
     offsets = []
 
-    # --- Leitura do CSV ---
     with open(csv_path, newline='') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
@@ -51,29 +51,45 @@ for idx, csv_path in enumerate(csv_paths):
     timestamps = np.array(timestamps)
     offsets = np.array(offsets)
 
-    # --- Tempo relativo ---
+    # Relative time calculation
     t0 = timestamps[0]
     t_exp = np.array([(ts - t0).total_seconds() for ts in timestamps])
+    
+    # Store data for plotting and calculation
+    all_initial_offsets.append(offsets[0])
+    experimental_data.append((t_exp, offsets))
+    
+    # Track max time for the model curve
+    if t_exp.max() > max_time:
+        max_time = t_exp.max()
 
-    # --- Condição inicial ---
-    offset_0 = offsets[0]
+# 2. Plot experimental trials
+colors = ['blue', 'green', 'red']
+for idx, (t_exp, offsets) in enumerate(experimental_data):
+    plt.plot(t_exp, offsets, 'o', alpha=0.5, markersize=4, 
+             color=colors[idx % len(colors)], label=f'Ensaio {idx+1}')
 
-    # --- Resposta do modelo ---
-    #y_model = offset_0 + K * duty * t_exp
+# 3. Calculate Model Responses
+avg_offset_0 = np.mean(all_initial_offsets)
+t_model = np.linspace(0, max_time, 200)
 
-    y_model = np.full_like(t_exp, offset_0)
+# delay
+y_model_delay = np.full_like(t_model, avg_offset_0)
+mask = t_model >= delay
+y_model_delay[mask] = avg_offset_0 + K * duty * (t_model[mask] - delay)
 
-    mask = t_exp >= delay
-    y_model[mask] = offset_0 + K * duty * (t_exp[mask] - delay)
+# no delay
+y_model_no_delay = avg_offset_0 + K * duty * t_model
 
-    ax = axes[idx]
-    ax.plot(t_exp, offsets, 'o-', label='Experimental')
-    ax.plot(t_exp, y_model, '-', linewidth=2, label='Modelo')
-    ax.grid(True)
-    ax.set_title(f'Ensaio {idx+1}')
-    ax.set_xlabel('Tempo (s)')
-    ax.set_ylabel('Offset')
-    ax.legend()
+# 4. Plot Model Curves
+#plt.plot(t_model, y_model_delay, 'k--', linestyle='--', linewidth=2, label=f'Modelo com atraso ({delay}s)')
+plt.plot(t_model, y_model_no_delay, 'k-', linestyle='--', linewidth=2, label='Modelo [G(s)]]')
 
+plt.title(f'Comparativo entre modelo e exeprimental para degrau de {duty}')
+plt.xlabel('Tempo (s)')
+plt.ylabel('Offset (px)')
+plt.grid(True, linestyle=':', alpha=0.7)
+plt.legend(loc='best')
 plt.tight_layout()
+
 plt.show()
